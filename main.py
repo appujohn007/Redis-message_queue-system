@@ -1,19 +1,26 @@
-import redis
+from fastapi import FastAPI
+from pydantic import BaseModel
 
-# Connect to the Redis server
-redis_client = redis.StrictRedis.from_url(
-    "redis://default:vi1zdXRYds3bjzaZijA3Jpbig8Qyr0cE@redis-15545.c11.us-east-1-2.ec2.redns.redis-cloud.com:15545"
-)
+# Initialize the FastAPI app
+app = FastAPI()
 
-# Subscribe to a channel
-pubsub = redis_client.pubsub()
-pubsub.subscribe("messages")  # Replace "messages" with your preferred channel name
+# Define the request schema (optional, if you want a POST request)
+class Message(BaseModel):
+    msg: str
 
-print("Listening for messages...")
+# GET endpoint: /text
+@app.get("/text")
+async def hello_world_get(msg: str = "Hello, World!"):
+    """
+    Handles GET requests at /text and returns the message.
+    """
+    return {"message": msg}
 
-# Continuously listen for messages
-for message in pubsub.listen():
-    if message["type"] == "message":
-        content = message["data"].decode()
-        if content.startswith("print:"):
-            print(content.split("print:", 1)[1].strip())  # Print the text after "print:"
+# POST endpoint: /text
+@app.post("/text")
+async def hello_world_post(data: Message):
+    """
+    Handles POST requests at /text and returns the message.
+    """
+    return {"message": data.msg}
+
