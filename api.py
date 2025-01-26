@@ -1,24 +1,21 @@
-from fastapi import FastAPI
 import redis
 
-app = FastAPI()
+# Redis connection details
+REDIS_URL = "redis://default:vi1zdXRYds3bjzaZijA3Jpbig8Qyr0cE@redis-15545.c11.us-east-1-2.ec2.redns.redis-cloud.com:15545"
 
-# Create a persistent Redis connection
-redis_client = redis.StrictRedis.from_url(
-    "redis://default:vi1zdXRYds3bjzaZijA3Jpbig8Qyr0cE@redis-15545.c11.us-east-1-2.ec2.redns.redis-cloud.com:15545",
-    decode_responses=True,
-)
-print("started")
-
-@app.get("/text")
-async def send_message(msg: str):
-    """
-    Push a message to Redis. The message will be in the format 'print: <msg>'.
-    """
+def send_message(message: str):
     try:
-        print("started /text")
-        message = f"print: {msg}"
-        redis_client.publish("messages", message)  # Publish the message to the 'messages' channel
-        return {"status": "Message sent", "message": msg}
+        # Connect to Redis
+        redis_client = redis.StrictRedis.from_url(REDIS_URL)
+        
+        # Publish the message to the "messages" channel
+        redis_client.publish("messages", f"print: {message}")
+        
+        print(f"Message sent: {message}")
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        print(f"Error sending message: {e}")
+
+if __name__ == "__main__":
+    # Input message to send
+    message = input("Enter the message to send: ")
+    send_message(message)
