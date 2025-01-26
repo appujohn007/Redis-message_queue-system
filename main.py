@@ -1,26 +1,22 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+import redis
 
-# Initialize the FastAPI app
 app = FastAPI()
 
-# Define the request schema (optional, if you want a POST request)
-class Message(BaseModel):
-    msg: str
+# Create a persistent Redis connection
+redis_client = redis.StrictRedis.from_url(
+    "redis://default:vi1zdXRYds3bjzaZijA3Jpbig8Qyr0cE@redis-15545.c11.us-east-1-2.ec2.redns.redis-cloud.com:15545",
+    decode_responses=True,
+)
 
-# GET endpoint: /text
 @app.get("/text")
-async def hello_world_get(msg: str = "Hello, World!"):
+async def send_message(msg: str):
     """
-    Handles GET requests at /text and returns the message.
+    Push a message to Redis. The message will be in the format 'print: <msg>'.
     """
-    return {"message": msg}
-
-# POST endpoint: /text
-@app.post("/text")
-async def hello_world_post(data: Message):
-    """
-    Handles POST requests at /text and returns the message.
-    """
-    return {"message": data.msg}
-
+    try:
+        message = f"print: {msg}"
+        redis_client.publish("messages", message)  # Publish the message to the 'messages' channel
+        return {"status": "Message sent", "message": msg}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
